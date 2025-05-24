@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { ROUTES } from '../shared/model/routes';
 import { App } from './app';
+import { ProtectedRoute, protectedLoader } from './protected-route';
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +26,21 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.REGISTER,
         lazy: () => import('@/features/auth/register.page'),
+      },
+
+      {
+        element: <ProtectedRoute />,
+        loader: protectedLoader,
+        children: [
+          {
+            path: ROUTES.SETTINGS,
+            lazy: () => import('@/features/profile/settings.page'),
+          },
+          {
+            path: ROUTES.ORDERS,
+            lazy: () => import('@/features/profile/orders.page'),
+          },
+        ],
       },
     ],
   },

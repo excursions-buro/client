@@ -1,4 +1,8 @@
 import { ROUTES } from '@/shared/model/routes';
+import { useSession } from '@/shared/model/session';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
 import { Button } from '@/shared/ui/button';
 import {
   DropdownMenu,
@@ -20,6 +24,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/shared/ui/sheet';
+
 import {
   ChevronDown,
   LogOut,
@@ -29,12 +34,17 @@ import {
   Star,
   User,
 } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router';
 
 export function AppHeader() {
+  const navigate = useNavigate();
+  const { session, logout } = useSession();
+  const isAuth = Boolean(session);
   const [currency, setCurrency] = useState('RUB');
-  const [isAuth, setIsAuth] = useState(true);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate(ROUTES.LOGIN);
+  };
 
   const navItems = [
     { label: 'Главная', to: ROUTES.HOME },
@@ -46,13 +56,12 @@ export function AppHeader() {
     <header className='sticky top-0 z-50 p-4 bg-white'>
       <div className='container mx-auto'>
         <div className='flex items-center justify-between'>
-          {/* Логотип */}
           <Link to={ROUTES.HOME} className='flex items-center gap-2'>
             <Star className='h-5 w-5 text-primary' />
             <span className='text-lg font-semibold'>ExcBuro</span>
           </Link>
 
-          {/* Навигация десктоп */}
+          {/* Навигация — десктоп */}
           <nav className='hidden md:flex items-center gap-6'>
             {navItems.map(({ label, to }) => (
               <Button key={to} asChild variant='ghost'>
@@ -100,7 +109,10 @@ export function AppHeader() {
                       <Settings className='h-4 w-4' /> Настройки
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className='text-destructive'>
+                  <DropdownMenuItem
+                    className='text-destructive cursor-pointer'
+                    onClick={handleLogout}
+                  >
                     <LogOut className='h-4 w-4 mr-2' /> Выйти
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -178,6 +190,7 @@ export function AppHeader() {
                         <Button
                           variant='ghost'
                           className='text-destructive justify-start'
+                          onClick={handleLogout}
                         >
                           <LogOut className='h-4 w-4 mr-2' /> Выйти
                         </Button>

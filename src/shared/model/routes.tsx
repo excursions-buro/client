@@ -7,8 +7,8 @@ export const ROUTES = {
   EXCURSIONS: '/excursions',
   EXCURSION: '/excursions/:excursionId',
   ABOUT: '/about',
-  SETTINGS: '/settings',
-  ORDERS: '/orders',
+  SETTINGS: '/profile/settings',
+  ORDERS: '/profile/orders',
 } as const;
 
 export type PathParams = {
