@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/shared/ui/card';
 import { Link } from 'react-router-dom';
-import type { Excursion } from '../types';
+import type { Excursion } from '../../../shared/model/types';
 
 export function ExcursionCard({ excursion }: { excursion: Excursion }) {
   const nearestSchedule = excursion.schedules[0];

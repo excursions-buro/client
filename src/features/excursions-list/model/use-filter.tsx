@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ExcursionFilters } from '../types';
+import type { ExcursionFilters } from '../../../shared/model/types';
 
 export function useFilters(initialFilters: ExcursionFilters = {}) {
   const [filters, setFilters] = useState(initialFilters);

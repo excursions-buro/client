@@ -1,6 +1,7 @@
 import { AppHeader } from '@/features/header';
 import { ROUTES } from '@/shared/model/routes';
 import { Outlet, useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner';
 
 export function App() {
   const location = useLocation();
@@ -12,6 +13,7 @@ export function App() {
     <div>
       {!isAuthPage && <AppHeader />}
       <Outlet />
+      <Toaster position='bottom-right' richColors />
     </div>
   );
 }

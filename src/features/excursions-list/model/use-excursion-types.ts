@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import type { ExcursionType } from '../../../shared/model/types';
 import { excursionService } from '../api';
-import type { ExcursionType } from '../types';
 
 export function useExcursionTypes() {
   return useQuery<ExcursionType[]>({

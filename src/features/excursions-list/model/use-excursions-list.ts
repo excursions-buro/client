@@ -1,7 +1,7 @@
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
+import type { Excursion, ExcursionFilters } from '@/shared/model/types';
 import { useQuery } from '@tanstack/react-query';
 import { excursionService } from '../api';
-import type { Excursion, ExcursionFilters } from '../types';
 
 function serializeFilters(filters: ExcursionFilters) {
   return {

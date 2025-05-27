@@ -9,7 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select';
-import type { ExcursionFilters, ExcursionType } from '../types';
+import type {
+  ExcursionFilters,
+  ExcursionType,
+} from '../../../shared/model/types';
 
 type FiltersSidebarProps = {
   filters: ExcursionFilters;
