@@ -88,3 +88,12 @@ export type Excursion = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type ExcursionFilters = {
+  typeId?: string;
+  priceMin?: string;
+  priceMax?: string;
+  date?: Date;
+  peopleCount?: string;
+  title?: string;
+};

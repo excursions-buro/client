@@ -1,10 +1,11 @@
 import { publicFetchClient } from '@/shared/api/instance';
-import type { Excursion } from './types';
+import type { Excursion, ExcursionType } from './types';
 
 export const excursionService = {
-  getExcursions: () =>
+  getExcursions: (params?: Record<string, unknown>) =>
     publicFetchClient.get<Excursion[]>('/api/excursions', {
       params: {
+        ...params,
         expand: ['type', 'images', 'schedules.slots', 'tickets'].join(','),
       },
     }),
@@ -15,4 +16,7 @@ export const excursionService = {
         expand: ['type', 'images', 'schedules.slots', 'tickets'].join(','),
       },
     }),
+
+  getExcursionTypes: () =>
+    publicFetchClient.get<ExcursionType[]>(`/api/excursions/types`),
 };
