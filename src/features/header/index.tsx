@@ -53,7 +53,7 @@ export function AppHeader() {
   ];
 
   return (
-    <header className='sticky top-0 z-50 p-4 bg-white'>
+    <header className='sticky top-0 z-50 p-4 bg-background dark:bg-background'>
       <div className='container mx-auto'>
         <div className='flex items-center justify-between'>
           <Link to={ROUTES.HOME} className='flex items-center gap-2'>

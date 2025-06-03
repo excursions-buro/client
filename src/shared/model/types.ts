@@ -19,6 +19,7 @@ export type ExcursionImage = {
 };
 
 export type ScheduleSlot = {
+  maxPeople: number;
   id: string;
   weekDay: number;
   time: string;
@@ -29,7 +30,6 @@ export type Schedule = {
   id: string;
   startDate: string;
   endDate: string;
-  maxPeople: number;
   slots: ScheduleSlot[];
   excursionId: string;
   createdAt: string;
