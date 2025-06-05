@@ -90,10 +90,10 @@ export type Excursion = {
 };
 
 export type ExcursionFilters = {
-  typeId?: string;
-  priceMin?: string;
-  priceMax?: string;
-  date?: Date;
-  peopleCount?: string;
   title?: string;
+  typeId?: string;
+  priceMin?: number;
+  priceMax?: number;
+  peopleCount?: number;
+  date?: Date;
 };

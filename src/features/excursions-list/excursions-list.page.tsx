@@ -13,9 +13,12 @@ import { FiltersSidebar } from './ui/excursion-list-filter-sidebar';
 import { ExcursionCard } from './ui/excursions-list-card';
 
 export function ExcursionsListPage() {
-  const { filters, updateFilter, resetFilters } = useFilters();
+  const { filters, updateFilter, resetFilters, hasActiveFilters } =
+    useFilters();
+
   const { data: excursions, isLoading, error } = useExcursions(filters);
   const { data: types, isLoading: typesLoading } = useExcursionTypes();
+
   const [isOpen, setIsOpen] = useState(false);
 
   if (error) {
@@ -43,6 +46,7 @@ export function ExcursionsListPage() {
               onReset={resetFilters}
               types={types}
               isLoadingTypes={typesLoading}
+              hasActiveFilters={hasActiveFilters}
             />
           </CollapsibleContent>
         </Collapsible>
@@ -56,6 +60,7 @@ export function ExcursionsListPage() {
           onReset={resetFilters}
           types={types}
           isLoadingTypes={typesLoading}
+          hasActiveFilters={hasActiveFilters}
         />
       </div>
 
@@ -65,9 +70,9 @@ export function ExcursionsListPage() {
 
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
           {isLoading ? (
-            Array(6)
-              .fill(0)
-              .map((_, i) => <Skeleton key={i} className='h-48 w-full' />)
+            Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className='h-48 w-full' />
+            ))
           ) : excursions && excursions.length > 0 ? (
             excursions.map((excursion) => (
               <ExcursionCard key={excursion.id} excursion={excursion} />

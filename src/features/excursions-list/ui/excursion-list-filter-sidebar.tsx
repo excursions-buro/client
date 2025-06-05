@@ -1,3 +1,4 @@
+// FiltersSidebar.tsx
 import { Button } from '@/shared/ui/button';
 import { DatePicker } from '@/shared/ui/date-picker';
 import { Input } from '@/shared/ui/input';
@@ -9,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select';
+import { X } from 'lucide-react';
+import { useMemo } from 'react';
 import type {
   ExcursionFilters,
   ExcursionType,
@@ -23,6 +26,7 @@ type FiltersSidebarProps = {
   onReset: () => void;
   types?: ExcursionType[];
   isLoadingTypes: boolean;
+  hasActiveFilters: boolean;
 };
 
 export function FiltersSidebar({
@@ -31,36 +35,54 @@ export function FiltersSidebar({
   onReset,
   types,
   isLoadingTypes,
+  hasActiveFilters,
 }: FiltersSidebarProps) {
   const handleInputChange =
-    <K extends keyof ExcursionFilters>(key: K) =>
+    (key: keyof ExcursionFilters) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      onFilterChange(key, e.target.value as ExcursionFilters[K]);
+      onFilterChange(key, e.target.value);
     };
 
   const handleNumberChange =
-    <K extends keyof ExcursionFilters>(key: K) =>
+    (key: 'priceMin' | 'priceMax' | 'peopleCount') =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      onFilterChange(
-        key,
-        value === '' ? undefined : (value as ExcursionFilters[K])
-      );
+      const raw = e.target.value;
+      const parsed = raw === '' ? undefined : Number(raw);
+      onFilterChange(key, isNaN(parsed as number) ? undefined : parsed);
     };
 
-  const handleDateChange = (date: Date | undefined) => {
+  const handleDateChange = (date?: Date) => {
     onFilterChange('date', date);
   };
 
-  return (
-    <div className='w-full space-y-6'>
-      <h2 className='text-xl font-semibold'>Фильтры</h2>
+  const handleSelectChange = (value: string) => {
+    onFilterChange('typeId', value === 'all' ? undefined : value);
+  };
 
-      <div className='space-y-4'>
+  const selectValue = useMemo(() => filters.typeId || 'all', [filters.typeId]);
+
+  return (
+    <div className='w-full space-y-6 p-4 bg-background rounded-lg border shadow-sm'>
+      <div className='flex justify-between items-center'>
+        <h2 className='text-xl font-semibold'>Фильтры</h2>
+        {hasActiveFilters && (
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={onReset}
+            className='text-muted-foreground hover:text-foreground flex items-center gap-1 px-2'
+          >
+            <X size={16} />
+            <span>Сбросить</span>
+          </Button>
+        )}
+      </div>
+
+      <div className='space-y-5'>
         <div className='space-y-2'>
           <Label>Поиск по названию</Label>
           <Input
-            placeholder='Название экскурсии'
+            placeholder='Введите название экскурсии'
             value={filters.title || ''}
             onChange={handleInputChange('title')}
           />
@@ -68,41 +90,42 @@ export function FiltersSidebar({
 
         <div className='space-y-2'>
           <Label>Тип экскурсии</Label>
-          <Select
-            value={filters.typeId || ''}
-            onValueChange={(v) => onFilterChange('typeId', v as string)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder='Выберите тип' />
+          <Select value={selectValue} onValueChange={handleSelectChange}>
+            <SelectTrigger className='bg-background'>
+              <SelectValue placeholder='Все типы' />
             </SelectTrigger>
             <SelectContent>
-              {isLoadingTypes && (
+              {!isLoadingTypes && <SelectItem value='all'>Все типы</SelectItem>}
+              {isLoadingTypes ? (
                 <SelectItem disabled value='loading'>
                   Загрузка...
                 </SelectItem>
+              ) : (
+                types?.map((type) => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))
               )}
-              {types?.map((type) => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.name}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
 
         <div className='space-y-2'>
-          <Label>Цена</Label>
-          <div className='flex gap-2'>
+          <Label>Цена, руб.</Label>
+          <div className='grid grid-cols-2 gap-2'>
             <Input
               placeholder='От'
               type='number'
-              value={filters.priceMin || ''}
+              min={0}
+              value={filters.priceMin?.toString() || ''}
               onChange={handleNumberChange('priceMin')}
             />
             <Input
               placeholder='До'
               type='number'
-              value={filters.priceMax || ''}
+              min={filters.priceMin ?? 0}
+              value={filters.priceMax?.toString() || ''}
               onChange={handleNumberChange('priceMax')}
             />
           </div>
@@ -117,14 +140,15 @@ export function FiltersSidebar({
           <Label>Количество человек</Label>
           <Input
             type='number'
-            placeholder='Количество человек'
-            value={filters.peopleCount || ''}
+            min={1}
+            placeholder='Укажите количество'
+            value={filters.peopleCount?.toString() || ''}
             onChange={handleNumberChange('peopleCount')}
           />
         </div>
 
-        <Button variant='outline' onClick={onReset} className='w-full'>
-          Сбросить фильтры
+        <Button onClick={onReset} variant='outline' className='w-full mt-4'>
+          Сбросить все фильтры
         </Button>
       </div>
     </div>

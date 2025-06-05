@@ -1,4 +1,8 @@
+// src/features/excursions/ui/ExcursionCard/ExcursionCard.tsx
 import { formatDate } from '@/shared/lib/date';
+import { getPriceRange } from '@/shared/lib/price-utils';
+import { findNearestSlot } from '@/shared/lib/slot-utils';
+import type { Excursion } from '@/shared/model/types';
 import { Button } from '@/shared/ui/button';
 import {
   Card,
@@ -8,104 +12,13 @@ import {
   CardTitle,
 } from '@/shared/ui/card';
 import { Link } from 'react-router-dom';
-import type { Excursion, ScheduleSlot } from '../../../shared/model/types';
-
-// Улучшенная функция для поиска ближайшего доступного слота
-function findNearestSlot(excursion: Excursion): {
-  date: Date | null;
-  slot: ScheduleSlot | null;
-} {
-  const now = new Date();
-  let nearestDate: Date | null = null;
-  let nearestSlot: ScheduleSlot | null = null;
-
-  // Перебираем все расписания экскурсии
-  for (const schedule of excursion.schedules) {
-    const startDate = new Date(schedule.startDate);
-    const endDate = new Date(schedule.endDate);
-
-    // Проверяем активность расписания
-    if (now > endDate) continue; // Расписание уже закончилось
-    if (now < startDate) {
-      // Расписание еще не началось - берем первый день
-      const firstDay = new Date(startDate);
-      firstDay.setHours(0, 0, 0, 0);
-
-      // Перебираем слоты первого дня
-      for (const slot of schedule.slots) {
-        const [hours, minutes] = slot.time.split(':').map(Number);
-        if (isNaN(hours) || isNaN(minutes)) continue;
-
-        const slotDateTime = new Date(firstDay);
-        slotDateTime.setHours(hours, minutes, 0, 0);
-
-        // Проверяем день недели
-        if (slotDateTime.getDay() !== slot.weekDay) {
-          // Корректируем день недели
-          const dayDiff = (slot.weekDay - slotDateTime.getDay() + 7) % 7;
-          slotDateTime.setDate(slotDateTime.getDate() + dayDiff);
-        }
-
-        // Проверяем попадает ли в расписание
-        if (slotDateTime < startDate || slotDateTime > endDate) continue;
-
-        // Выбираем ближайший слот
-        if (!nearestDate || slotDateTime < nearestDate) {
-          nearestDate = slotDateTime;
-          nearestSlot = slot;
-        }
-      }
-      continue;
-    }
-
-    // Для активных расписаний
-    for (const slot of schedule.slots) {
-      // Вычисляем ближайшую дату для дня недели
-      const currentDay = now.getDay();
-      let daysToAdd = (slot.weekDay - currentDay + 7) % 7;
-      const nextDate = new Date(now);
-      nextDate.setDate(now.getDate() + daysToAdd);
-
-      // Парсим время слота
-      const [hours, minutes] = slot.time.split(':').map(Number);
-      if (isNaN(hours) || isNaN(minutes)) continue;
-
-      // Создаем объект даты для слота
-      const slotDateTime = new Date(nextDate);
-      slotDateTime.setHours(hours, minutes, 0, 0);
-
-      // Если слот сегодня и время уже прошло, берем следующий неделю
-      if (daysToAdd === 0 && slotDateTime < now) {
-        daysToAdd = 7;
-        slotDateTime.setDate(slotDateTime.getDate() + 7);
-      }
-
-      // Проверяем входит ли дата в интервал расписания
-      if (slotDateTime < startDate || slotDateTime > endDate) continue;
-
-      // Выбираем ближайший слот
-      if (!nearestDate || slotDateTime < nearestDate) {
-        nearestDate = slotDateTime;
-        nearestSlot = slot;
-      }
-    }
-  }
-
-  return { date: nearestDate, slot: nearestSlot };
-}
 
 export function ExcursionCard({ excursion }: { excursion: Excursion }) {
   // Находим ближайший доступный слот
   const { date: nearestDate, slot: nearestSlot } = findNearestSlot(excursion);
 
   // Вычисляем диапазон цен
-  const priceRange = excursion.tickets.reduce(
-    (acc, ticket) => ({
-      min: Math.min(acc.min, ticket.price),
-      max: Math.max(acc.max, ticket.price),
-    }),
-    { min: Infinity, max: -Infinity }
-  );
+  const priceRange = getPriceRange(excursion);
 
   return (
     <Link
@@ -133,12 +46,14 @@ export function ExcursionCard({ excursion }: { excursion: Excursion }) {
                 <span className='rounded-full bg-accent px-3 py-1 text-accent-foreground'>
                   {excursion.type.name}
                 </span>
-                {excursion.tickets.length > 0 && (
+                {priceRange ? (
                   <span className='font-medium'>
                     {priceRange.min === priceRange.max
                       ? `${priceRange.min.toLocaleString()} ₽`
                       : `${priceRange.min.toLocaleString()} - ${priceRange.max.toLocaleString()} ₽`}
                   </span>
+                ) : (
+                  <span className='text-muted-foreground'>Цена не указана</span>
                 )}
               </div>
             </div>
@@ -157,7 +72,7 @@ export function ExcursionCard({ excursion }: { excursion: Excursion }) {
                 <div className='flex items-center gap-2'>
                   <span className='font-medium'>Ближайшая дата:</span>
                   <span className='text-primary'>
-                    {formatDate(nearestDate.toISOString())} в {nearestSlot.time}
+                    {formatDate(nearestDate.toISOString())}
                   </span>
                 </div>
                 <div className='flex items-center gap-2 text-muted-foreground'>
@@ -182,7 +97,7 @@ export function ExcursionCard({ excursion }: { excursion: Excursion }) {
               Подробнее
             </Button>
             <div className='text-xs text-muted-foreground'>
-              {formatDate(excursion.updatedAt, 'dd.MM.yy')}
+              Обновлено: {formatDate(excursion.updatedAt, 'dd.MM.yy')}
             </div>
           </CardFooter>
         </div>

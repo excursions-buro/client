@@ -1,17 +1,11 @@
+// src/features/excursions/pages/excursion-page.tsx
+import { findNearestSlot } from '@/shared/lib/slot-utils';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
-import { ScrollArea } from '@/shared/ui/scroll-area';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { format } from 'date-fns';
+import { format, isAfter, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import {
-  ArrowLeft,
-  CalendarDays,
-  Clock,
-  MapPin,
-  Ticket,
-  Users,
-} from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock, MapPin, Ticket } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -31,12 +25,29 @@ export function ExcursionPage() {
     }
   }, [error]);
 
-  const formatDate = (dateString: string) => {
+  // Находим ближайший доступный слот
+  const nearestSlotInfo = excursion ? findNearestSlot(excursion) : null;
+
+  const formatDate = (dateString: string | Date) => {
     return format(new Date(dateString), 'dd MMMM yyyy', { locale: ru });
   };
 
-  const formatTime = (dateString: string) => {
-    return format(new Date(dateString), 'HH:mm');
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':');
+    return `${hours}:${minutes}`;
+  };
+
+  const formatWeekDay = (weekDay: number) => {
+    const days = {
+      1: 'Понедельник',
+      2: 'Вторник',
+      3: 'Среда',
+      4: 'Четверг',
+      5: 'Пятница',
+      6: 'Суббота',
+      7: 'Воскресенье',
+    };
+    return days[weekDay as keyof typeof days] || 'День недели не указан';
   };
 
   if (!excursionId) {
@@ -101,36 +112,71 @@ export function ExcursionPage() {
               {excursion.schedules.length > 0 && (
                 <section className='space-y-6'>
                   <h2 className='text-2xl font-semibold'>Расписание</h2>
-                  <ScrollArea className='h-[400px] rounded-lg border'>
-                    <div className='p-4 space-y-4'>
-                      {excursion.schedules.map((schedule) => (
+                  <div className='space-y-4'>
+                    {excursion.schedules.map((schedule) => {
+                      const startDate = new Date(schedule.startDate);
+                      const endDate = new Date(schedule.endDate);
+                      const isActive = isAfter(endDate, startOfDay(new Date()));
+
+                      return (
                         <div
                           key={schedule.id}
-                          className='p-6 bg-muted/10 rounded-lg'
+                          className={`p-6 rounded-lg border ${
+                            isActive ? 'bg-muted/10' : 'bg-muted/30 opacity-80'
+                          }`}
                         >
-                          <div className='flex items-center gap-4 mb-2'>
-                            <CalendarDays className='h-6 w-6 text-primary' />
-                            <span className='text-lg font-medium'>
-                              {formatDate(schedule.startDate)}
-                            </span>
-                          </div>
-                          <div className='flex items-center gap-4'>
+                          <div className='flex flex-wrap items-center gap-4 mb-4'>
                             <div className='flex items-center gap-2'>
-                              <Clock className='h-5 w-5 text-muted-foreground' />
-                              <span>
-                                {formatTime(schedule.startDate)} -{' '}
-                                {formatTime(schedule.endDate)}
+                              <CalendarDays className='h-6 w-6 text-primary' />
+                              <span className='text-lg font-medium'>
+                                {formatDate(startDate)} - {formatDate(endDate)}
                               </span>
                             </div>
-                            <div className='flex items-center gap-2'>
-                              <Users className='h-5 w-5 text-muted-foreground' />
-                              <span>До {} человек</span>
-                            </div>
+                            <Badge variant={isActive ? 'default' : 'secondary'}>
+                              {isActive ? 'Активно' : 'Завершено'}
+                            </Badge>
+                          </div>
+
+                          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                            {schedule.slots.map((slot) => {
+                              const slotDate =
+                                nearestSlotInfo?.slot?.id === slot.id
+                                  ? nearestSlotInfo.date
+                                  : null;
+
+                              return (
+                                <div
+                                  key={slot.id}
+                                  className='p-4 rounded-lg border bg-card'
+                                >
+                                  <div className='flex justify-between items-start'>
+                                    <div>
+                                      <h3 className='font-medium flex items-center gap-2'>
+                                        <Clock className='h-5 w-5 text-muted-foreground' />
+                                        {formatTime(slot.time)}
+                                      </h3>
+                                      <p className='text-sm text-muted-foreground mt-1'>
+                                        {formatWeekDay(slot.weekDay)}
+                                      </p>
+                                    </div>
+                                    <div className='text-sm text-right'>
+                                      <div>до {slot.maxPeople} чел.</div>
+                                    </div>
+                                  </div>
+
+                                  {slotDate && (
+                                    <div className='mt-3 text-sm text-green-600 font-medium'>
+                                      Ближайшая дата: {formatDate(slotDate)}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
+                      );
+                    })}
+                  </div>
                 </section>
               )}
             </div>
@@ -139,6 +185,35 @@ export function ExcursionPage() {
             <aside className='space-y-8'>
               {/* Блок бронирования */}
               <div className='sticky top-8 space-y-6'>
+                {/* Ближайшая дата */}
+                <div className='p-6 bg-card rounded-xl border space-y-4'>
+                  <h3 className='text-xl font-semibold flex items-center gap-2'>
+                    <CalendarDays className='h-6 w-6' />
+                    Ближайшая дата
+                  </h3>
+
+                  {nearestSlotInfo?.date && nearestSlotInfo.slot ? (
+                    <div className='space-y-2'>
+                      <div className='flex justify-between items-center'>
+                        <span>Дата:</span>
+                        <span className='text-lg font-bold'>
+                          {formatDate(nearestSlotInfo.date)}
+                        </span>
+                      </div>
+                      <div className='flex justify-between items-center'>
+                        <span>Время:</span>
+                        <span className='font-medium'>
+                          {formatTime(nearestSlotInfo.slot.time)}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className='text-muted-foreground italic'>
+                      Ближайшие даты уточняются
+                    </p>
+                  )}
+                </div>
+
                 {/* Цены */}
                 <div className='p-6 bg-card rounded-xl border space-y-4'>
                   <h3 className='text-xl font-semibold flex items-center gap-2'>
@@ -217,12 +292,20 @@ function ExcursionSkeleton() {
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
         <div className='lg:col-span-2 space-y-6'>
           <Skeleton className='h-24 w-full' />
-          <Skeleton className='h-[400px] w-full rounded-lg' />
+          <div className='space-y-4'>
+            <Skeleton className='h-16 w-full' />
+            <div className='grid grid-cols-2 gap-4'>
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className='h-24 w-full rounded-lg' />
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className='space-y-6'>
-          <Skeleton className='h-[300px] w-full rounded-xl' />
-          <Skeleton className='h-[300px] w-full rounded-xl' />
+          <Skeleton className='h-48 w-full rounded-xl' />
+          <Skeleton className='h-48 w-full rounded-xl' />
+          <Skeleton className='h-48 w-full rounded-xl' />
         </div>
       </div>
     </div>
