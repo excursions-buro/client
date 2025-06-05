@@ -1,5 +1,5 @@
 import { publicFetchClient } from '@/shared/api/instance';
-import type { Excursion } from '@/shared/model/types';
+import type { BookingData, Excursion, Order } from '@/shared/model/types';
 
 export const excursionService = {
   getExcursionById: (id: string) =>
@@ -7,5 +7,16 @@ export const excursionService = {
       params: {
         expand: ['type', 'images', 'schedules.slots', 'tickets'].join(','),
       },
+    }),
+
+  bookTicket: (excursionId: string, bookingData: BookingData) =>
+    publicFetchClient.post<Order>(
+      `/api/bookings/${excursionId}/book`,
+      bookingData
+    ),
+
+  getBookedSeats: (scheduleId: string, slotTime: string) =>
+    publicFetchClient.get<number>(`/api/bookings/seats`, {
+      params: { scheduleId, slotTime },
     }),
 };

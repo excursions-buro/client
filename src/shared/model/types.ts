@@ -54,7 +54,7 @@ export type OrderItem = {
 export type Order = {
   id: string;
   totalPrice: number;
-  status: 'PENDING' | 'PAID' | 'CANCELLED';
+  status: 'PENDING' | 'PAID' | 'CANCELLED' | 'REFUNDED';
   userId: string;
   items: OrderItem[];
   createdAt: string;
@@ -87,6 +87,22 @@ export type Excursion = {
   tickets: TicketCategory[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type BookingData = {
+  scheduleId: string;
+  slotTime: string;
+  tickets: {
+    id: string;
+    count: number;
+  }[];
+  contact: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  paymentMethod?: 'sber' | 'tinkoff' | 'yoomoney' | 'cash';
+  paymentStatus?: 'PENDING' | 'PAID' | 'CANCELLED' | 'REFUNDED';
 };
 
 export type ExcursionFilters = {

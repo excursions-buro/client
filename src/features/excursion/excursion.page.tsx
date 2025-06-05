@@ -1,4 +1,3 @@
-// src/features/excursions/pages/excursion-page.tsx
 import { findNearestSlot } from '@/shared/lib/slot-utils';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
@@ -62,7 +61,7 @@ export function ExcursionPage() {
 
   return (
     <>
-      <div className='container mx-auto py-8'>
+      <main className='container mx-auto py-8 px-4 md:px-4'>
         {/* Кнопка возврата */}
         <Button variant='ghost' className='mb-8 -ml-4' asChild>
           <Link to='/excursions' className='flex items-center gap-2'>
@@ -265,7 +264,7 @@ export function ExcursionPage() {
             </aside>
           </div>
         )}
-      </div>
+      </main>
       {excursion && (
         <BookingDialog
           excursion={excursion}

@@ -1,7 +1,7 @@
 'use client';
 
-import { toast } from 'sonner';
-
+import type { Excursion } from '@/shared/model/types';
+import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/dialog';
+import { Input } from '@/shared/ui/input';
 import {
   Select,
   SelectContent,
@@ -18,8 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select';
-
-import type { Excursion } from '@/shared/model/types';
 import {
   Tooltip,
   TooltipContent,
@@ -28,14 +27,17 @@ import {
 } from '@/shared/ui/tooltip';
 import { differenceInMinutes, format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Info } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { excursionService } from '../api';
+import { useBookTicket } from '../model/use-book-ticket';
 
 interface BookingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   excursion: Excursion;
-  bookedSeatsMap?: Record<string, number>;
   userProfile?: {
     name?: string;
     email?: string;
@@ -48,22 +50,55 @@ export const BookingDialog = ({
   open,
   onOpenChange,
   excursion,
-  bookedSeatsMap = {},
   userProfile,
 }: BookingDialogProps) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
+
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>();
   const [selectedSlotTime, setSelectedSlotTime] = useState<string>();
   const [ticketCounts, setTicketCounts] = useState<Record<string, number>>({});
   const [name, setName] = useState(userProfile?.name || '');
   const [email, setEmail] = useState(userProfile?.email || '');
   const [phone, setPhone] = useState(userProfile?.phone || '');
+  const { bookTicket, isLoading: isBooking } = useBookTicket();
+  const [bookedSeats, setBookedSeats] = useState(0);
   const maxTickets = 5;
 
   const selectedSchedule = excursion.schedules.find(
     (s) => s.id === selectedScheduleId
   );
+
   const availableSlots = selectedSchedule?.slots ?? [];
+
+  const slot = useMemo(() => {
+    if (!selectedSlotTime || !selectedSchedule) return null;
+    return selectedSchedule.slots.find((s) => s.time === selectedSlotTime);
+  }, [selectedSlotTime, selectedSchedule]);
+
+  // Получаем занятые места
+  useEffect(() => {
+    if (!selectedScheduleId || !selectedSlotTime) return;
+
+    const fetchBookedSeats = async () => {
+      try {
+        const response = await excursionService.getBookedSeats(
+          selectedScheduleId,
+          selectedSlotTime
+        );
+        setBookedSeats(response.data);
+      } catch (error) {
+        console.error('Ошибка при получении занятых мест:', error);
+        toast.error('Не удалось получить данные о свободных местах');
+      }
+    };
+
+    fetchBookedSeats();
+  }, [selectedScheduleId, selectedSlotTime]);
+
+  const availableSeats = useMemo(() => {
+    return slot ? slot.maxPeople - bookedSeats : 0;
+  }, [slot, bookedSeats]);
 
   const durationMinutes = selectedSchedule
     ? differenceInMinutes(
@@ -72,19 +107,27 @@ export const BookingDialog = ({
       )
     : 0;
 
-  const availableSeats = useMemo(() => {
-    const total =
-      selectedSchedule?.slots.find((slot) => slot.time === selectedSlotTime)
-        ?.maxPeople || 0;
-    const booked = bookedSeatsMap[selectedScheduleId ?? ''] || 0;
-    return total - booked;
-  }, [selectedSchedule, selectedSlotTime, bookedSeatsMap, selectedScheduleId]);
-
   const formatDate = (dateStr: string) =>
     format(new Date(dateStr), 'dd MMMM yyyy', { locale: ru });
 
   useEffect(() => {
+    if (!open) {
+      // Сброс состояния при закрытии
+      setTimeout(() => {
+        setStep(1);
+        setSelectedScheduleId(undefined);
+        setSelectedSlotTime(undefined);
+        setTicketCounts({});
+        setName(userProfile?.name || '');
+        setEmail(userProfile?.email || '');
+        setPhone(userProfile?.phone || '');
+      }, 300);
+    }
+  }, [open, userProfile]);
+
+  useEffect(() => {
     setSelectedSlotTime(undefined);
+    setBookedSeats(0);
   }, [selectedScheduleId]);
 
   const totalTickets = Object.values(ticketCounts).reduce((a, b) => a + b, 0);
@@ -101,30 +144,59 @@ export const BookingDialog = ({
       const next = { ...prev, [ticketId]: (prev[ticketId] || 0) + delta };
       if (next[ticketId] <= 0) delete next[ticketId];
       const sum = Object.values(next).reduce((a, b) => a + b, 0);
-      if (sum > maxTickets) return prev; // не больше maxTickets
+      if (sum > maxTickets) return prev;
       return next;
     });
   };
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!email.trim()) {
       toast.error('Email обязателен для отправки билета');
       return;
     }
 
-    // Имитация отправки брони
-    toast.success(
-      'Бронирование прошло успешно. Билет будет отправлен на почту.'
-    );
+    if (!name.trim()) {
+      toast.error('Пожалуйста, укажите ваше имя');
+      return;
+    }
 
-    onOpenChange(false);
-    setStep(1);
-    setSelectedScheduleId(undefined);
-    setSelectedSlotTime(undefined);
-    setTicketCounts({});
-    setName(userProfile?.name || '');
-    setEmail(userProfile?.email || '');
-    setPhone(userProfile?.phone || '');
+    if (!selectedScheduleId || !selectedSlotTime) {
+      toast.error('Пожалуйста, выберите дату и время');
+      return;
+    }
+
+    if (totalTickets === 0) {
+      toast.error('Выберите хотя бы один билет');
+      return;
+    }
+
+    if (availableSeats < totalTickets) {
+      toast.error('Недостаточно свободных мест');
+      return;
+    }
+
+    try {
+      const bookingData = {
+        scheduleId: selectedScheduleId,
+        slotTime: selectedSlotTime,
+        tickets: Object.entries(ticketCounts).map(([id, count]) => ({
+          id,
+          count,
+        })),
+        contact: { name, email, phone },
+      };
+
+      const order = await bookTicket(excursion.id, bookingData);
+
+      // Перенаправляем на страницу заказа
+      navigate(`/orders/${order.id}`);
+
+      // Закрываем диалог
+      onOpenChange(false);
+    } catch (error) {
+      // Ошибка уже обработана в хуке, дополнительная обработка не требуется
+      console.error('Ошибка бронирования:', error);
+    }
   };
 
   return (
@@ -144,7 +216,7 @@ export const BookingDialog = ({
                 <label className='block mb-1 font-medium'>Выберите дату</label>
                 <Select
                   value={selectedScheduleId}
-                  onValueChange={(value) => setSelectedScheduleId(value)}
+                  onValueChange={setSelectedScheduleId}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='Дата' />
@@ -169,7 +241,8 @@ export const BookingDialog = ({
                   </label>
                   <Select
                     value={selectedSlotTime}
-                    onValueChange={(value) => setSelectedSlotTime(value)}
+                    onValueChange={setSelectedSlotTime}
+                    disabled={!selectedScheduleId}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder='Время' />
@@ -187,29 +260,44 @@ export const BookingDialog = ({
                 </div>
               )}
 
-              {/* Длительность */}
-              {selectedSchedule && (
-                <p>
-                  <strong>Длительность:</strong>{' '}
-                  {Math.floor(durationMinutes / 60)} ч {durationMinutes % 60}{' '}
-                  мин
-                </p>
-              )}
-
-              {/* Оставшиеся места */}
+              {/* Информация о слоте */}
               {selectedSchedule && selectedSlotTime && (
-                <p>
-                  <strong>Осталось мест:</strong> {availableSeats}
-                </p>
-              )}
-
-              {/* Фото */}
-              {excursion.mainImage && (
-                <img
-                  src={excursion.mainImage}
-                  alt={excursion.title}
-                  className='mt-4 w-full max-h-48 object-cover rounded-lg'
-                />
+                <div className='grid grid-cols-2 gap-4 mt-2'>
+                  <div>
+                    <p className='text-sm text-muted-foreground'>
+                      Длительность
+                    </p>
+                    <p className='font-medium'>
+                      {Math.floor(durationMinutes / 60)} ч{' '}
+                      {durationMinutes % 60} мин
+                    </p>
+                  </div>
+                  <div>
+                    <p className='text-sm text-muted-foreground'>
+                      Свободно мест
+                    </p>
+                    <div className='flex items-center'>
+                      <Badge
+                        variant={availableSeats > 3 ? 'default' : 'destructive'}
+                        className='mr-2'
+                      >
+                        {availableSeats}
+                      </Badge>
+                      {availableSeats < 5 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className='w-4 h-4 text-muted-foreground' />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Осталось мало мест, бронируйте скорее!
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
             </>
           )}
@@ -217,6 +305,9 @@ export const BookingDialog = ({
           {step === 2 && (
             <>
               <h2 className='text-lg font-semibold'>Выбор билетов</h2>
+              <p className='text-sm text-muted-foreground'>
+                Максимальное количество билетов: {maxTickets}
+              </p>
 
               <div className='space-y-3'>
                 {excursion.tickets.map((ticket) => {
@@ -224,23 +315,14 @@ export const BookingDialog = ({
                   return (
                     <div
                       key={ticket.id}
-                      className='flex justify-between items-center'
+                      className='flex justify-between items-center p-3 border rounded-lg'
                     >
-                      <span>
-                        {ticket.name} — {ticket.price} ₽{' '}
-                        {ticket.name.includes('Дети') && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className='inline w-4 h-4 ml-1 text-muted-foreground' />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                У вас скидка на 2 билета
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </span>
+                      <div>
+                        <span className='font-medium'>{ticket.name}</span>
+                        <p className='text-muted-foreground text-sm'>
+                          {ticket.price.toLocaleString('ru-RU')} ₽
+                        </p>
+                      </div>
 
                       <div className='flex items-center gap-2'>
                         <Button
@@ -251,7 +333,7 @@ export const BookingDialog = ({
                         >
                           -
                         </Button>
-                        <span>{count}</span>
+                        <span className='w-6 text-center'>{count}</span>
                         <Button
                           variant='outline'
                           size='icon'
@@ -266,9 +348,17 @@ export const BookingDialog = ({
                 })}
               </div>
 
-              <p className='text-lg font-bold pt-4'>
-                Итого: {totalPrice.toLocaleString()} ₽
-              </p>
+              <div className='pt-4 border-t'>
+                <div className='flex justify-between items-center'>
+                  <span className='font-medium'>Итого:</span>
+                  <span className='text-lg font-bold'>
+                    {totalPrice.toLocaleString('ru-RU')} ₽
+                  </span>
+                </div>
+                <p className='text-sm text-muted-foreground mt-1'>
+                  {totalTickets} билет{totalTickets === 1 ? '' : 'а'}
+                </p>
+              </div>
             </>
           )}
 
@@ -282,7 +372,7 @@ export const BookingDialog = ({
                   <a href='/login' className='underline'>
                     авторизироваться
                   </a>{' '}
-                  для удобства, но это не обязательно.
+                  для сохранения данных
                 </div>
               )}
 
@@ -295,14 +385,14 @@ export const BookingDialog = ({
               <div className='space-y-4'>
                 <div>
                   <label className='block mb-1 font-medium' htmlFor='name'>
-                    Имя
+                    Имя *
                   </label>
-                  <input
+                  <Input
                     id='name'
                     type='text'
-                    className='w-full rounded border px-3 py-2'
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    required
                   />
                 </div>
 
@@ -310,10 +400,9 @@ export const BookingDialog = ({
                   <label className='block mb-1 font-medium' htmlFor='email'>
                     Email *
                   </label>
-                  <input
+                  <Input
                     id='email'
                     type='email'
-                    className='w-full rounded border px-3 py-2'
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -324,10 +413,9 @@ export const BookingDialog = ({
                   <label className='block mb-1 font-medium' htmlFor='phone'>
                     Телефон
                   </label>
-                  <input
+                  <Input
                     id='phone'
                     type='tel'
-                    className='w-full rounded border px-3 py-2'
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
@@ -341,34 +429,42 @@ export const BookingDialog = ({
           {step > 1 && (
             <Button
               variant='outline'
-              onClick={() => setStep((s) => s - 1)}
-              disabled={step === 1}
+              onClick={() => setStep(step - 1)}
+              disabled={isBooking}
             >
               Назад
             </Button>
           )}
 
-          {step < 3 && (
+          {step < 3 ? (
             <Button
               onClick={() => {
                 if (step === 1 && (!selectedScheduleId || !selectedSlotTime)) {
                   toast.error('Пожалуйста, выберите дату и время');
                   return;
                 }
-                if (step === 2 && totalTickets === 0) {
-                  toast.error('Выберите хотя бы один билет');
-                  return;
-                }
-                setStep((s) => s + 1);
+                setStep(step + 1);
               }}
+              disabled={
+                (step === 1 && (!selectedScheduleId || !selectedSlotTime)) ||
+                isBooking
+              }
             >
               Далее
             </Button>
-          )}
-
-          {step === 3 && (
-            <Button onClick={handleBooking} disabled={!email.trim()}>
-              Забронировать
+          ) : (
+            <Button
+              onClick={handleBooking}
+              disabled={!name || !email || isBooking}
+            >
+              {isBooking ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Обработка...
+                </>
+              ) : (
+                'Забронировать'
+              )}
             </Button>
           )}
         </DialogFooter>
