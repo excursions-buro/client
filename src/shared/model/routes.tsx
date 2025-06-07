@@ -8,12 +8,19 @@ export const ROUTES = {
   EXCURSION: '/excursions/:excursionId',
   ABOUT: '/about',
   SETTINGS: '/profile/settings',
-  ORDERS: '/profile/orders',
+  ORDER: '/orders/order/:orderId',
+  ORDERS: '/orders/:userId',
 } as const;
 
 export type PathParams = {
   [ROUTES.EXCURSION]: {
     excursionId: string;
+  };
+  [ROUTES.ORDER]: {
+    orderId: string;
+  };
+  [ROUTES.ORDERS]: {
+    userId: string;
   };
 };
 

@@ -32,6 +32,10 @@ export const router = createBrowserRouter([
         path: ROUTES.REGISTER,
         lazy: () => import('@/features/auth/register.page'),
       },
+      {
+        path: ROUTES.ORDER,
+        lazy: () => import('@/features/order/order.page'),
+      },
 
       {
         element: <ProtectedRoute />,

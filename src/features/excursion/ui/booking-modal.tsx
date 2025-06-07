@@ -76,7 +76,6 @@ export const BookingDialog = ({
     return selectedSchedule.slots.find((s) => s.time === selectedSlotTime);
   }, [selectedSlotTime, selectedSchedule]);
 
-  // Получаем занятые места
   useEffect(() => {
     if (!selectedScheduleId || !selectedSlotTime) return;
 
@@ -188,13 +187,10 @@ export const BookingDialog = ({
 
       const order = await bookTicket(excursion.id, bookingData);
 
-      // Перенаправляем на страницу заказа
-      navigate(`/orders/${order.id}`);
+      navigate(`/orders/order/${order.id}`);
 
-      // Закрываем диалог
       onOpenChange(false);
     } catch (error) {
-      // Ошибка уже обработана в хуке, дополнительная обработка не требуется
       console.error('Ошибка бронирования:', error);
     }
   };

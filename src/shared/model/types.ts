@@ -18,14 +18,6 @@ export type ExcursionImage = {
   excursionId: string;
 };
 
-export type ScheduleSlot = {
-  maxPeople: number;
-  id: string;
-  weekDay: number;
-  time: string;
-  scheduleId: string;
-};
-
 export type Schedule = {
   id: string;
   startDate: string;
@@ -34,32 +26,6 @@ export type Schedule = {
   excursionId: string;
   createdAt: string;
   updatedAt: string;
-};
-
-export type TicketCategory = {
-  id: string;
-  name: string;
-  price: number;
-  excursionId: string;
-};
-
-export type OrderItem = {
-  id: string;
-  quantity: number;
-  price: number;
-  orderId: string;
-  ticketCategoryId: string;
-};
-
-export type Order = {
-  id: string;
-  totalPrice: number;
-  status: 'PENDING' | 'PAID' | 'CANCELLED' | 'REFUNDED';
-  userId: string;
-  items: OrderItem[];
-  createdAt: string;
-  updatedAt: string;
-  emailSent: boolean;
 };
 
 export type Discount = {
@@ -112,4 +78,47 @@ export type ExcursionFilters = {
   priceMax?: number;
   peopleCount?: number;
   date?: Date;
+};
+
+// Добавить новые типы
+export type TicketCategory = {
+  id: string;
+  name: string;
+  price: number;
+  excursionId: string;
+};
+
+export type OrderItem = {
+  id: string;
+  quantity: number;
+  price: number;
+  orderId: string;
+  ticketCategoryId: string;
+  scheduleSlotId: string | null;
+  ticketCategory: TicketCategory;
+  scheduleSlot?: ScheduleSlot;
+};
+
+// Обновить тип Order
+export type Order = {
+  id: string;
+  totalPrice: number;
+  status: 'PENDING' | 'PAID' | 'CANCELLED' | 'REFUNDED';
+  userId: string | null;
+  items: OrderItem[];
+  createdAt: string;
+  updatedAt: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string | null;
+  discountId: string | null;
+  discountAmount: number | null;
+};
+
+export type ScheduleSlot = {
+  id: string;
+  weekDay: number;
+  time: string;
+  maxPeople: number;
+  scheduleId: string;
 };
