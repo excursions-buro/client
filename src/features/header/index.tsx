@@ -53,7 +53,7 @@ export function AppHeader() {
   ];
 
   return (
-    <header className='sticky top-0 z-50 p-4 bg-background dark:bg-background'>
+    <header className='sticky top-0 z-50 p-4 bg-background dark:bg-background border-b'>
       <div className='container mx-auto'>
         <div className='flex items-center justify-between'>
           <Link to={ROUTES.HOME} className='flex items-center gap-2'>
@@ -94,7 +94,13 @@ export function AppHeader() {
                 <DropdownMenuTrigger asChild>
                   <Button variant='outline' className='gap-2'>
                     <User className='h-4 w-4' />
-                    <span className='hidden sm:inline'>Профиль</span>
+                    {session?.user?.name ? (
+                      <span className='hidden sm:inline'>
+                        {session.user.name}
+                      </span>
+                    ) : (
+                      <span className='hidden sm:inline'>Профиль</span>
+                    )}
                     <ChevronDown className='h-4 w-4 opacity-50' />
                   </Button>
                 </DropdownMenuTrigger>
@@ -102,6 +108,11 @@ export function AppHeader() {
                   <DropdownMenuItem asChild>
                     <Link to={ROUTES.ORDERS} className='gap-2'>
                       <ShoppingCart className='h-4 w-4' /> Мои заказы
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to={ROUTES.PROFILE} className='gap-2'>
+                      <User className='h-4 w-4' /> Профиль
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
