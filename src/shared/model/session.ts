@@ -2,9 +2,11 @@ import { publicFetchClient } from '@/shared/api/instance';
 import { jwtDecode } from 'jwt-decode';
 import { create } from 'zustand';
 
+// Расширяем тип сессии, добавляя информацию о пользователе
 type Session = {
   userId: string;
   email: string;
+  name?: string; // Добавляем имя пользователя
   exp: number;
   iat: number;
 };
@@ -15,6 +17,8 @@ interface SessionStore {
   login: (token: string) => void;
   logout: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
+  // Добавляем метод для обновления данных пользователя
+  updateUser: (userData: Partial<Session>) => void;
 }
 
 const TOKEN_KEY = 'token';
@@ -65,12 +69,30 @@ export const useSession = create<SessionStore>((set, get) => {
               return null;
             }
           })
+          .catch((error) => {
+            console.error('Refresh token failed:', error);
+            logout();
+            return null;
+          })
           .finally(() => {
             refreshTokenPromise = null;
           });
       }
 
       return await refreshTokenPromise;
+    },
+
+    // Добавляем метод для обновления данных пользователя
+    updateUser: (userData) => {
+      set((state) => {
+        if (!state.session) return state;
+        return {
+          session: {
+            ...state.session,
+            ...userData,
+          },
+        };
+      });
     },
   };
 });

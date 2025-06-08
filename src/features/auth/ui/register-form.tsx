@@ -1,3 +1,4 @@
+import { useSession } from '@/shared/model/session';
 import { Button } from '@/shared/ui/button';
 import {
   Form,
@@ -52,8 +53,9 @@ export function RegisterForm() {
 
   const onRegister = (data: Step2Values) => {
     registerMutation.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         // Редирект после успешной регистрации
+        useSession.getState().login(response.accessToken);
         navigate('/');
       },
     });

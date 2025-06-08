@@ -94,10 +94,8 @@ export function AppHeader() {
                 <DropdownMenuTrigger asChild>
                   <Button variant='outline' className='gap-2'>
                     <User className='h-4 w-4' />
-                    {session?.user?.name ? (
-                      <span className='hidden sm:inline'>
-                        {session.user.name}
-                      </span>
+                    {session?.name ? (
+                      <span className='hidden sm:inline'>{session.name}</span>
                     ) : (
                       <span className='hidden sm:inline'>Профиль</span>
                     )}
@@ -108,11 +106,6 @@ export function AppHeader() {
                   <DropdownMenuItem asChild>
                     <Link to={ROUTES.ORDERS} className='gap-2'>
                       <ShoppingCart className='h-4 w-4' /> Мои заказы
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to={ROUTES.PROFILE} className='gap-2'>
-                      <User className='h-4 w-4' /> Профиль
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -164,22 +157,33 @@ export function AppHeader() {
                     </Button>
                   ))}
 
-                  <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Валюта' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['RUB', 'USD', 'EUR'].map((curr) => (
-                        <SelectItem key={curr} value={curr}>
-                          {curr}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-sm'>Валюта:</span>
+                    <Select value={currency} onValueChange={setCurrency}>
+                      <SelectTrigger className='w-24'>
+                        <SelectValue placeholder='Валюта' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['RUB', 'USD', 'EUR'].map((curr) => (
+                          <SelectItem key={curr} value={curr}>
+                            {curr}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   <div className='pt-4 border-t'>
                     {isAuth ? (
                       <div className='flex flex-col gap-2'>
+                        {/* Добавлено отображение имени в мобильном меню */}
+                        <div className='flex items-center gap-2 px-3 py-2 rounded-md bg-muted'>
+                          <User className='h-4 w-4' />
+                          <span className='font-medium'>
+                            {session?.name || 'Профиль'}
+                          </span>
+                        </div>
+
                         <Button
                           asChild
                           variant='ghost'
