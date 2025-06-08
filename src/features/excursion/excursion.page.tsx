@@ -1,3 +1,4 @@
+import { useUserProfile } from '@/features/profile';
 import { findNearestSlot } from '@/shared/lib/slot-utils';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
@@ -13,6 +14,7 @@ import { BookingDialog } from './ui/booking-modal';
 
 export function ExcursionPage() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const { data: userProfile } = useUserProfile();
   const { excursionId } = useParams<{ excursionId: string }>();
   const { data: excursion, isLoading, error } = useExcursion(excursionId);
 
@@ -270,6 +272,7 @@ export function ExcursionPage() {
           excursion={excursion}
           open={isBookingOpen}
           onOpenChange={setIsBookingOpen}
+          userProfile={userProfile}
         />
       )}
     </>

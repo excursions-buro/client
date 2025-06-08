@@ -39,10 +39,10 @@ interface BookingDialogProps {
   onOpenChange: (open: boolean) => void;
   excursion: Excursion;
   userProfile?: {
+    id?: string;
     name?: string;
     email?: string;
     phone?: string;
-    isAuthorized?: boolean;
   };
 }
 
@@ -183,6 +183,7 @@ export const BookingDialog = ({
           count,
         })),
         contact: { name, email, phone },
+        userId: userProfile?.id,
       };
 
       const order = await bookTicket(excursion.id, bookingData);
@@ -362,7 +363,7 @@ export const BookingDialog = ({
             <>
               <h2 className='text-lg font-semibold'>Контактные данные</h2>
 
-              {!userProfile?.isAuthorized && (
+              {!userProfile?.id && (
                 <div className='mb-4 p-3 bg-yellow-100 rounded border border-yellow-300 text-yellow-900'>
                   Вы можете{' '}
                   <a href='/login' className='underline'>
