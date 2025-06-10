@@ -1,3 +1,4 @@
+import { ROUTES } from '@/shared/model/routes';
 import { useSession } from '@/shared/model/session';
 import { Button } from '@/shared/ui/button';
 import {
@@ -11,7 +12,7 @@ import {
 import { Input } from '@/shared/ui/input';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRegister, useSendCode } from '../model/use-auth';
 
 interface Step1Values {
@@ -249,6 +250,9 @@ export function RegisterForm() {
               </p>
             )}
           </form>
+          <Button asChild variant='link' className='pt-2'>
+            <Link to={ROUTES.LOGIN}>Уже есть аккаунт?</Link>
+          </Button>
         </Form>
       )}
     </div>

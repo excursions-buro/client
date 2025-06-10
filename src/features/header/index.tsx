@@ -27,6 +27,7 @@ import {
 
 import {
   ChevronDown,
+  Grip,
   LogOut,
   Menu,
   Settings,
@@ -34,12 +35,14 @@ import {
   Star,
   User,
 } from 'lucide-react';
+import { useUserProfile } from '../profile';
 
 export function AppHeader() {
   const navigate = useNavigate();
   const { session, logout } = useSession();
   const isAuth = Boolean(session);
   const [currency, setCurrency] = useState('RUB');
+  const { data: user } = useUserProfile();
 
   const handleLogout = async () => {
     await logout();
@@ -108,6 +111,13 @@ export function AppHeader() {
                       <ShoppingCart className='h-4 w-4' /> Мои заказы
                     </Link>
                   </DropdownMenuItem>
+                  {user?.role === 'ADMIN' && (
+                    <DropdownMenuItem asChild>
+                      <Link to={ROUTES.ADMIN} className='gap-2'>
+                        <Grip className='h-4 w-4' /> Админ панель
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to={ROUTES.SETTINGS} className='gap-2'>
                       <Settings className='h-4 w-4' /> Настройки
@@ -193,6 +203,18 @@ export function AppHeader() {
                             <ShoppingCart className='h-4 w-4 mr-2' /> Заказы
                           </Link>
                         </Button>
+                        {user?.role === 'ADMIN' && (
+                          <Button
+                            asChild
+                            variant='ghost'
+                            className='justify-start'
+                          >
+                            <Link to={ROUTES.ADMIN}>
+                              <Grip className='h-4 w-4 mr-2' /> Аналитика
+                            </Link>
+                          </Button>
+                        )}
+
                         <Button
                           asChild
                           variant='ghost'

@@ -11,7 +11,7 @@ import {
 } from '@/shared/ui/form';
 import { Input } from '@/shared/ui/input';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLogin } from '../model/use-auth';
 
 interface LoginFormValues {
@@ -114,6 +114,9 @@ export function LoginForm() {
           </p>
         )}
       </form>
+      <Button asChild variant='link' className='pt-2'>
+        <Link to={ROUTES.REGISTER}>Еще не зарегистрированы?</Link>
+      </Button>
     </Form>
   );
 }

@@ -6,6 +6,7 @@ export const ROUTES = {
   REGISTER: '/register',
   EXCURSIONS: '/excursions',
   EXCURSION: '/excursions/:excursionId',
+  ADMIN: '/admin',
   ABOUT: '/about',
   SETTINGS: '/profile/settings',
   ORDER: '/orders/order/:orderId',

@@ -1,4 +1,5 @@
 import { useSession } from '@/shared/model/session';
+import type { User } from '@/shared/model/types';
 import { Button } from '@/shared/ui/button';
 import {
   Form,
@@ -9,13 +10,13 @@ import {
   FormMessage,
 } from '@/shared/ui/form';
 import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
 import { Skeleton } from '@/shared/ui/skeleton';
+import Switch from '@/shared/ui/switch';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useUpdateUser } from './model/use-update-profile';
 import { useUserProfile } from './model/use-user-profile';
-
-import type { User } from '@/shared/model/types';
 
 interface ProfileFormValues {
   name: string;
@@ -66,10 +67,42 @@ function SettingsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
+  // Состояния для управления темой
+  const [isMounted, setIsMounted] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
   const form = useForm<ProfileFormValues>({
     defaultValues: { name: '', email: '' },
     mode: 'onBlur',
   });
+
+  // Инициализация темы при монтировании
+  useEffect(() => {
+    setIsMounted(true);
+    const storedTheme = localStorage.getItem('theme') as
+      | 'light'
+      | 'dark'
+      | null;
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+      .matches
+      ? 'dark'
+      : 'light';
+
+    setTheme(storedTheme || systemTheme);
+  }, []);
+
+  // Применение темы и сохранение в localStorage
+  useEffect(() => {
+    if (!isMounted) return;
+
+    if (theme === 'dark') {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+
+    localStorage.setItem('theme', theme);
+  }, [theme, isMounted]);
 
   useEffect(() => {
     if (user) {
@@ -103,6 +136,21 @@ function SettingsPage() {
   return (
     <div className='max-w-xl mx-auto p-6 space-y-6'>
       <h1 className='text-2xl font-bold'>Настройки профиля</h1>
+
+      {/* Секция переключения темы */}
+      <div className='flex items-center justify-between p-4 border rounded-lg'>
+        <div>
+          <Label htmlFor='theme-switch'>Темная тема</Label>
+          <p className='text-sm text-muted-foreground'>
+            {theme === 'dark' ? 'Активна' : 'Неактивна'}
+          </p>
+        </div>
+        <Switch
+          id='theme-switch'
+          checked={theme === 'dark'}
+          onChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+        />
+      </div>
 
       {!isEditing ? (
         <UserProfileDetails

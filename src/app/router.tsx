@@ -49,7 +49,15 @@ export const router = createBrowserRouter([
             path: ROUTES.ORDERS,
             lazy: () => import('@/features/profile/orders.page'),
           },
+          {
+            path: ROUTES.ADMIN,
+            lazy: () => import('@/features/admin/admin.page'),
+          },
         ],
+      },
+      {
+        path: '*',
+        lazy: () => import('@/features/not-found/not-found.page'),
       },
     ],
   },
