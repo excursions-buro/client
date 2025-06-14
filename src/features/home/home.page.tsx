@@ -62,7 +62,6 @@ function HomePage() {
           </Button>
         </div>
       </section>
-
       {/* Partners */}
       <section className='container py-16'>
         <h2 className='text-2xl font-bold mb-8 text-center'>Наши партнеры</h2>
@@ -78,25 +77,35 @@ function HomePage() {
           ))}
         </div>
       </section>
-
       {/* Photo Gallery */}
-      <section className=' py-16'>
+      <section className='py-16'>
         <div className='container'>
           <h2 className='text-2xl font-bold mb-8 text-center'>
             Московские впечатления
           </h2>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-              <Card key={item} className='aspect-square relative group'>
-                <div className='absolute inset-0 bg-primary/10 flex items-center justify-center'>
-                  <Camera className='h-8 w-8 text-primary' />
-                </div>
+            {[
+              'https://images.unsplash.com/photo-1720653540371-c1d25411c3b7',
+              'https://images.unsplash.com/photo-1642318965390-1ee0da7af92f',
+              'https://images.unsplash.com/photo-1693742349351-a469798b25c7',
+              'https://images.unsplash.com/photo-1656542663659-f516eaf87570',
+              'https://images.unsplash.com/photo-1690142706432-2861bac9e536',
+              'https://images.unsplash.com/photo-1578910330150-e1ab90fc81c1',
+              'https://images.unsplash.com/photo-1715436839745-d3b902803375',
+              'https://images.unsplash.com/photo-1653251648164-a39e0098c9da',
+            ].map((url, index) => (
+              <Card key={index} className='aspect-square overflow-hidden p-0'>
+                <img
+                  src={url}
+                  alt={`Достопримечательность Москвы ${index + 1}`}
+                  className='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
+                  loading='lazy'
+                />
               </Card>
             ))}
           </div>
         </div>
       </section>
-
       {/* FAQ */}
       <section className='container py-16'>
         <h2 className='text-2xl font-bold mb-8 text-center'>Частые вопросы</h2>

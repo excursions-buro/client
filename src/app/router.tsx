@@ -36,7 +36,10 @@ export const router = createBrowserRouter([
         path: ROUTES.ORDER,
         lazy: () => import('@/features/order/order.page'),
       },
-
+      {
+        path: ROUTES.ABOUT,
+        lazy: () => import('@/features/about/about.page'),
+      },
       {
         element: <ProtectedRoute />,
         loader: protectedLoader,

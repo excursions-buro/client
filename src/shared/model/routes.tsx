@@ -8,9 +8,12 @@ export const ROUTES = {
   EXCURSION: '/excursions/:excursionId',
   ADMIN: '/admin',
   ABOUT: '/about',
+  CONTACTS: 'mailto:support@mskburo.ru',
   SETTINGS: '/profile/settings',
   ORDER: '/orders/order/:orderId',
   ORDERS: '/orders/:userId',
+  TERMS: '/',
+  PRIVACY: '/',
 } as const;
 
 export type PathParams = {
